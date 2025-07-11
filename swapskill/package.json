@@ -1,0 +1,21 @@
+{
+  "name": "skill-swap",
+  "version": "1.0.0",
+  "description": "A full-stack skill-sharing platform.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm:start:backend\" \"npm:start:frontend\"",
+    "start:backend": "cd skill-swap-backend && python manage.py runserver 127.0.0.1:8000",
+    "start:frontend": "cd skill-swap-frontend && npm run dev"
+  },
+  "keywords": [
+    "react",
+    "django",
+    "full-stack"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

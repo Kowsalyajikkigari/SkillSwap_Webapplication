@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillSwap Auth Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        .token { word-break: break-all; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 SkillSwap Authentication Test</h1>
+        
+        <div class="section info">
+            <h3>📋 Test Instructions</h3>
+            <ol>
+                <li>Open this page in the same browser where you're testing SkillSwap</li>
+                <li>Click "Check Auth Status" to see current authentication state</li>
+                <li>If not logged in, use the login form below</li>
+                <li>Test API calls to verify authentication is working</li>
+            </ol>
+        </div>
+
+        <div class="section">
+            <h3>🔍 Current Authentication Status</h3>
+            <button onclick="checkAuthStatus()">Check Auth Status</button>
+            <div id="authStatus"></div>
+        </div>
+
+        <div class="section">
+            <h3>🔑 Login Test</h3>
+            <form onsubmit="testLogin(event)">
+                <div>
+                    <label>Email: </label>
+                    <input type="email" id="email" value="user1@example.com" required>
+                </div>
+                <div style="margin: 10px 0;">
+                    <label>Password: </label>
+                    <input type="password" id="password" value="password123" required>
+                </div>
+                <button type="submit">Test Login</button>
+            </form>
+            <div id="loginResult"></div>
+        </div>
+
+        <div class="section">
+            <h3>🧪 API Test</h3>
+            <button onclick="testUnreadCounts()">Test Unread Counts API</button>
+            <button onclick="testNotifications()">Test Notifications API</button>
+            <div id="apiResult"></div>
+        </div>
+
+        <div class="section">
+            <h3>🔌 WebSocket Test</h3>
+            <button onclick="testWebSocket()">Test WebSocket Connection</button>
+            <div id="wsResult"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:8000/api';
+        const WS_BASE = 'ws://localhost:8000';
+
+        function checkAuthStatus() {
+            const token = localStorage.getItem('token');
+            const refreshToken = localStorage.getItem('refreshToken');
+            const user = localStorage.getItem('user');
+            
+            let html = '<h4>🔍 Local Storage Contents:</h4>';
+            
+            if (token) {
+                html += `<div class="success">✅ Access Token Found</div>`;
+                html += `<div class="token"><strong>Token:</strong> ${token}</div>`;
+                
+                // Decode JWT payload
+                try {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    html += `<pre><strong>Token Payload:</strong>\n${JSON.stringify(payload, null, 2)}</pre>`;
+                    
+                    const now = Math.floor(Date.now() / 1000);
+                    if (payload.exp < now) {
+                        html += `<div class="error">❌ Token is expired (exp: ${new Date(payload.exp * 1000)})</div>`;
+                    } else {
+                        html += `<div class="success">✅ Token is valid (expires: ${new Date(payload.exp * 1000)})</div>`;
+                    }
+                } catch (e) {
+                    html += `<div class="error">❌ Invalid token format</div>`;
+                }
+            } else {
+                html += `<div class="error">❌ No Access Token Found</div>`;
+            }
+            
+            if (refreshToken) {
+                html += `<div class="success">✅ Refresh Token Found</div>`;
+            } else {
+                html += `<div class="error">❌ No Refresh Token Found</div>`;
+            }
+            
+            if (user) {
+                html += `<div class="success">✅ User Data Found</div>`;
+                html += `<pre><strong>User:</strong>\n${JSON.stringify(JSON.parse(user), null, 2)}</pre>`;
+            } else {
+                html += `<div class="error">❌ No User Data Found</div>`;
+            }
+            
+            document.getElementById('authStatus').innerHTML = html;
+        }
+
+        async function testLogin(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/login/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Store tokens
+                    localStorage.setItem('token', data.access);
+                    localStorage.setItem('refreshToken', data.refresh);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    
+                    document.getElementById('loginResult').innerHTML = 
+                        `<div class="success">✅ Login successful!</div>
+                         <pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    document.getElementById('loginResult').innerHTML = 
+                        `<div class="error">❌ Login failed: ${JSON.stringify(data, null, 2)}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('loginResult').innerHTML = 
+                    `<div class="error">❌ Login error: ${error.message}</div>`;
+            }
+        }
+
+        async function testUnreadCounts() {
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                document.getElementById('apiResult').innerHTML = 
+                    `<div class="error">❌ No token found. Please login first.</div>`;
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/messages/unread-counts/`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('apiResult').innerHTML = 
+                        `<div class="success">✅ Unread Counts API Success!</div>
+                         <pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    document.getElementById('apiResult').innerHTML = 
+                        `<div class="error">❌ API Error (${response.status}): ${JSON.stringify(data, null, 2)}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('apiResult').innerHTML = 
+                    `<div class="error">❌ API Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testNotifications() {
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                document.getElementById('apiResult').innerHTML = 
+                    `<div class="error">❌ No token found. Please login first.</div>`;
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/messages/notifications/`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('apiResult').innerHTML = 
+                        `<div class="success">✅ Notifications API Success!</div>
+                         <pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    document.getElementById('apiResult').innerHTML = 
+                        `<div class="error">❌ API Error (${response.status}): ${JSON.stringify(data, null, 2)}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('apiResult').innerHTML = 
+                    `<div class="error">❌ API Error: ${error.message}</div>`;
+            }
+        }
+
+        function testWebSocket() {
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                document.getElementById('wsResult').innerHTML = 
+                    `<div class="error">❌ No token found. Please login first.</div>`;
+                return;
+            }
+            
+            try {
+                const ws = new WebSocket(`${WS_BASE}/ws/messages/?token=${token}`);
+                
+                ws.onopen = () => {
+                    document.getElementById('wsResult').innerHTML = 
+                        `<div class="success">✅ WebSocket connected successfully!</div>`;
+                    
+                    // Send a ping
+                    ws.send(JSON.stringify({ type: 'ping', timestamp: new Date().toISOString() }));
+                };
+                
+                ws.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    document.getElementById('wsResult').innerHTML += 
+                        `<div class="info">📨 Received: ${JSON.stringify(data, null, 2)}</div>`;
+                };
+                
+                ws.onerror = (error) => {
+                    document.getElementById('wsResult').innerHTML = 
+                        `<div class="error">❌ WebSocket error: ${error}</div>`;
+                };
+                
+                ws.onclose = (event) => {
+                    document.getElementById('wsResult').innerHTML += 
+                        `<div class="info">🔌 WebSocket closed: ${event.code} - ${event.reason}</div>`;
+                };
+                
+                // Close after 5 seconds
+                setTimeout(() => {
+                    ws.close();
+                }, 5000);
+                
+            } catch (error) {
+                document.getElementById('wsResult').innerHTML = 
+                    `<div class="error">❌ WebSocket error: ${error.message}</div>`;
+            }
+        }
+
+        // Auto-check auth status on page load
+        window.onload = checkAuthStatus;
+    </script>
+</body>
+</html>
