@@ -10,8 +10,6 @@ import { LoadingProvider } from "./contexts/LoadingContext";
 import { Toaster } from "./components/ui/toaster";
 import { RouteWrapper } from "./components/routing/RouteWrapper";
 import { clearInvalidTokens } from "./services/auth.service";
-// Import backend test utility for debugging
-import "./utils/backend-test";
 
 // Lazy load pages for better performance
 const Index = lazy(() => import("./pages/Index"));
