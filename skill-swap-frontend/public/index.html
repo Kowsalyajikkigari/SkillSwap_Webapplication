@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillSwap</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            background-color: #9b87f5;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+        }
+        h1 {
+            margin: 0;
+        }
+        .hero {
+            background-color: white;
+            padding: 50px 20px;
+            text-align: center;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .btn {
+            display: inline-block;
+            background-color: #9b87f5;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            margin: 10px;
+        }
+        .features {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            margin: 40px 0;
+        }
+        .feature {
+            flex: 0 0 calc(33.333% - 20px);
+            background-color: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        @media (max-width: 768px) {
+            .feature {
+                flex: 0 0 100%;
+            }
+        }
+        footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>SkillSwap</h1>
+            <p>Share your skills, discover new talents</p>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="hero">
+            <h2>Welcome to SkillSwap</h2>
+            <p>The platform where skills are the currency. Exchange knowledge, grow together, and build meaningful connections.</p>
+            <a href="#" class="btn">Join Now</a>
+            <a href="#" class="btn" style="background-color: transparent; color: #9b87f5; border: 1px solid #9b87f5;">Learn More</a>
+        </div>
+        
+        <div class="features">
+            <div class="feature">
+                <h3>Create Profile</h3>
+                <p>Sign up and create your profile with the skills you can offer and what you're looking to learn.</p>
+            </div>
+            <div class="feature">
+                <h3>Discover Skills</h3>
+                <p>Browse available skills and find members who are offering what you want to learn.</p>
+            </div>
+            <div class="feature">
+                <h3>Exchange & Grow</h3>
+                <p>Meet up (virtually or in-person), share your knowledge, and learn new skills.</p>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <div class="container">
+            <p>&copy; 2023 SkillSwap. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('SkillSwap is ready!');
+        });
+    </script>
+</body>
+</html>

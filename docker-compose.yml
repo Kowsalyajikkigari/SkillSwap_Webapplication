@@ -1,0 +1,192 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: swapskill_db
+    environment:
+      POSTGRES_DB: swapskill
+      POSTGRES_USER: swapskill_user
+      POSTGRES_PASSWORD: swapskill_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - swapskill_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U swapskill_user -d swapskill"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: swapskill_redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - swapskill_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Backend Django Application
+  backend:
+    build:
+      context: ./skill-swap-backend
+      dockerfile: Dockerfile
+    container_name: swapskill_backend
+    environment:
+      - DEBUG=False
+      - SECRET_KEY=${SECRET_KEY}
+      - DATABASE_URL=postgresql://swapskill_user:swapskill_password@db:5432/swapskill
+      - REDIS_URL=redis://redis:6379/0
+      - ALLOWED_HOSTS=localhost,127.0.0.1,backend,frontend
+      - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://frontend:3000
+      - EMAIL_HOST=${EMAIL_HOST}
+      - EMAIL_HOST_USER=${EMAIL_HOST_USER}
+      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
+      - ULTRAVOX_API_KEY=${ULTRAVOX_API_KEY}
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
+      - TWILIO_PHONE_NUMBER=${TWILIO_PHONE_NUMBER}
+    volumes:
+      - ./skill-swap-backend:/app
+      - media_files:/app/media
+      - static_files:/app/staticfiles
+      - ./logs:/app/logs
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - swapskill_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Frontend React Application
+  frontend:
+    build:
+      context: ./skill-swap-frontend
+      dockerfile: Dockerfile
+      args:
+        - REACT_APP_API_URL=http://localhost:8000/api
+        - REACT_APP_WS_URL=ws://localhost:8000/ws
+        - REACT_APP_VOICE_AI_URL=http://localhost:8000/api/voice-ai
+    container_name: swapskill_frontend
+    environment:
+      - NODE_ENV=production
+      - REACT_APP_API_URL=http://backend:8000/api
+      - REACT_APP_WS_URL=ws://backend:8000/ws
+      - REACT_APP_VOICE_AI_URL=http://backend:8000/api/voice-ai
+    volumes:
+      - ./skill-swap-frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - swapskill_network
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy (Production)
+  nginx:
+    image: nginx:alpine
+    container_name: swapskill_nginx
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - static_files:/var/www/static
+      - media_files:/var/www/media
+      - ./ssl:/etc/nginx/ssl
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - swapskill_network
+    restart: unless-stopped
+
+  # Celery Worker (for background tasks)
+  celery:
+    build:
+      context: ./skill-swap-backend
+      dockerfile: Dockerfile
+    container_name: swapskill_celery
+    command: celery -A skillswap worker -l info
+    environment:
+      - DEBUG=False
+      - SECRET_KEY=${SECRET_KEY}
+      - DATABASE_URL=postgresql://swapskill_user:swapskill_password@db:5432/swapskill
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - ./skill-swap-backend:/app
+      - ./logs:/app/logs
+    depends_on:
+      - db
+      - redis
+    networks:
+      - swapskill_network
+    restart: unless-stopped
+
+  # Celery Beat (for scheduled tasks)
+  celery-beat:
+    build:
+      context: ./skill-swap-backend
+      dockerfile: Dockerfile
+    container_name: swapskill_celery_beat
+    command: celery -A skillswap beat -l info
+    environment:
+      - DEBUG=False
+      - SECRET_KEY=${SECRET_KEY}
+      - DATABASE_URL=postgresql://swapskill_user:swapskill_password@db:5432/swapskill
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - ./skill-swap-backend:/app
+      - ./logs:/app/logs
+    depends_on:
+      - db
+      - redis
+    networks:
+      - swapskill_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  media_files:
+    driver: local
+  static_files:
+    driver: local
+
+networks:
+  swapskill_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
