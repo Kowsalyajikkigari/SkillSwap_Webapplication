@@ -155,8 +155,13 @@ const ProfileCreateWizard = () => {
     loadCompletionStatus();
   }, [searchParams]);
 
-  // Update URL when step changes
+  // Update URL when step changes (skip initial render to avoid infinite loop)
+  const initialRender = React.useRef(true);
   useEffect(() => {
+    if (initialRender.current) {
+      initialRender.current = false;
+      return;
+    }
     setSearchParams({ step: currentStep.toString() });
   }, [currentStep, setSearchParams]);
 
