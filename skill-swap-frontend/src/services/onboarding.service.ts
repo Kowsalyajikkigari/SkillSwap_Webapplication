@@ -165,10 +165,21 @@ export const submitProfileData = async (formData: OnboardingFormData): Promise<a
 
     // Step 3: Create teaching skills
     console.log('📝 Step 3: Creating teaching skills...');
+
+    // Fetch a valid default category from backend
+    let defaultCategoryId = 1;
+    try {
+      const categories = await apiService.get('/api/skills/categories/');
+      if (categories && categories.length > 0) {
+        defaultCategoryId = categories[0].id;
+      }
+    } catch (e) {
+      console.warn('Could not fetch categories, using default:', e);
+    }
+
     const teachingSkillPromises = cleanedFormData.teachingSkills.map(async (skill) => {
       try {
         // First, search for existing skill
-        console.log(`🔍 Searching for skill: ${skill.skillName}`);
         const existingSkills = await apiService.searchSkills(skill.skillName);
 
         if (existingSkills.length > 0) {
@@ -177,10 +188,9 @@ export const submitProfileData = async (formData: OnboardingFormData): Promise<a
           console.log(`✅ Found existing skill: ${skill.skillName} (ID: ${skill.skillId})`);
         } else {
           // Create new skill if it doesn't exist
-          console.log(`🆕 Creating new skill: ${skill.skillName}`);
           const skillData = {
             name: skill.skillName,
-            category: 1, // Default to first category for now
+            category: defaultCategoryId,
             description: skill.description || `${skill.skillName} skill`
           };
 
@@ -246,7 +256,6 @@ export const submitProfileData = async (formData: OnboardingFormData): Promise<a
     const learningGoalPromises = cleanedFormData.learningGoals.map(async (goal) => {
       try {
         // First, search for existing skill
-        console.log(`🔍 Searching for learning skill: ${goal.skillName}`);
         const existingSkills = await apiService.searchSkills(goal.skillName);
 
         if (existingSkills.length > 0) {
@@ -255,10 +264,9 @@ export const submitProfileData = async (formData: OnboardingFormData): Promise<a
           console.log(`✅ Found existing skill: ${goal.skillName} (ID: ${goal.skillId})`);
         } else {
           // Create new skill if it doesn't exist
-          console.log(`🆕 Creating new learning skill: ${goal.skillName}`);
           const skillData = {
             name: goal.skillName,
-            category: 1, // Default to first category for now
+            category: defaultCategoryId,
             description: goal.goal || `${goal.skillName} skill`
           };
 
