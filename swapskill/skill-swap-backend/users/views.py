@@ -146,8 +146,8 @@ class PublicUsersView(generics.ListAPIView):
     serializer_class = UserProfileSerializer
 
     def get_queryset(self):
-        # Return all users with profiles for session scheduling
-        return User.objects.filter(profile__isnull=False).select_related('profile')
+        # Return all users with profiles for session scheduling (ordered to avoid warnings)
+        return User.objects.filter(profile__isnull=False).select_related('profile').order_by('id')
 
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
@@ -161,24 +161,21 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
 
     def update(self, request, *args, **kwargs):
         """Enhanced update method with proper avatar handling."""
-        print(f"🔄 UserProfileView.update called")
-        print(f"📋 Request data: {request.data}")
-        print(f"📁 Request files: {request.FILES}")
+        logger.info(f"UserProfileView.update called")
+        logger.info(f"Request data: {request.data}")
+        logger.info(f"Request files: {request.FILES}")
 
         user = self.get_object()
 
         # Ensure user has a profile
         profile, created = Profile.objects.get_or_create(user=user)
         if created:
-            print(f"✅ Created new profile for user: {user.email}")
+            logger.info(f"Created new profile for user: {user.email}")
 
         # Handle avatar upload specifically
         if 'avatar' in request.FILES:
             avatar_file = request.FILES['avatar']
-            print(f"📸 Avatar file received:")
-            print(f"  - Name: {avatar_file.name}")
-            print(f"  - Size: {avatar_file.size}")
-            print(f"  - Content type: {avatar_file.content_type}")
+            logger.info(f"Avatar file received: {avatar_file.name}, size={avatar_file.size}")
 
             # Validate file
             if not avatar_file.content_type.startswith('image/'):
@@ -190,7 +187,7 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
             # Save avatar to profile
             profile.avatar = avatar_file
             profile.save()
-            print(f"✅ Avatar saved to profile: {profile.avatar.url}")
+            logger.info(f"Avatar saved to profile: {profile.avatar.url}")
 
         # Handle other profile fields
         profile_fields = ['bio', 'location', 'availability']
@@ -208,14 +205,14 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
             for field, value in profile_data.items():
                 setattr(profile, field, value)
             profile.save()
-            print(f"✅ Profile updated: {profile_data}")
+            logger.info(f"Profile updated: {profile_data}")
 
         # Update user fields
         if user_data:
             for field, value in user_data.items():
                 setattr(user, field, value)
             user.save()
-            print(f"✅ User updated: {user_data}")
+            logger.info(f"User updated: {user_data}")
 
         # Return updated data
         serializer = self.get_serializer(user)

@@ -23,11 +23,11 @@ const apiClient = axios.create({
 
 // List of public endpoints that don't require authentication
 const PUBLIC_ENDPOINTS = [
-  '/auth/register/',
-  '/auth/login/',
-  '/auth/password/reset/',
-  '/skills/categories/',
-  '/skills/all/', // For public skill browsing
+  '/api/auth/register/',
+  '/api/auth/login/',
+  '/api/auth/password/reset/',
+  '/api/skills/categories/',
+  '/api/skills/all/', // For public skill browsing
 ];
 
 // Request interceptor for adding auth token
@@ -82,7 +82,7 @@ apiClient.interceptors.response.use(
         const refreshToken = localStorage.getItem('refreshToken');
         if (refreshToken) {
           console.log('🔄 Auto-refreshing expired token...');
-          const response = await apiClient.post('/auth/token/refresh/', {
+          const response = await apiClient.post('/api/auth/token/refresh/', {
             refresh: refreshToken,
           });
 
@@ -414,7 +414,7 @@ export const updateProfile = async (data: any): Promise<any> => {
 
     // Use PATCH method with FormData
     try {
-      const response = await apiClient.patch('/auth/user/profile/', formData, {
+      const response = await apiClient.patch('/api/auth/user/profile/', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -434,36 +434,36 @@ export const updateProfile = async (data: any): Promise<any> => {
       delete cleanData.avatar;
     }
 
-    return patch('/auth/user/profile/', cleanData);
+    return patch('/api/auth/user/profile/', cleanData);
   }
 };
 
 export const updateProfilePreferences = async (data: any): Promise<any> => {
-  return patch('/auth/profile/', data);
+  return patch('/api/auth/profile/', data);
 };
 
 export const createSkill = async (data: any): Promise<any> => {
-  return post('/skills/all/', data);
+  return post('/api/skills/all/', data);
 };
 
 export const searchSkills = async (query: string): Promise<any[]> => {
-  return get(`/skills/all/?search=${encodeURIComponent(query)}`);
+  return get(`/api/skills/all/?search=${encodeURIComponent(query)}`);
 };
 
 export const createUserTeachingSkill = async (data: any): Promise<any> => {
-  return post('/skills/teaching/', data);
+  return post('/api/skills/teaching/', data);
 };
 
 export const createUserLearningSkill = async (data: any): Promise<any> => {
-  return post('/skills/learning/', data);
+  return post('/api/skills/learning/', data);
 };
 
 export const getUserTeachingSkills = async (): Promise<any[]> => {
-  return get('/skills/teaching/');
+  return get('/api/skills/teaching/');
 };
 
 export const getUserLearningSkills = async (): Promise<any[]> => {
-  return get('/skills/learning/');
+  return get('/api/skills/learning/');
 };
 
 export const apiService = {

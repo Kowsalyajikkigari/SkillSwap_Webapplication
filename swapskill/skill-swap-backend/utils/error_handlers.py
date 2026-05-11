@@ -172,8 +172,26 @@ def custom_exception_handler(exc, context):
         request = context.get('request')
         request_id = getattr(request, 'id', None) if request else None
         
+        # Get the actual HTTP status code from the response
+        actual_status_code = response.status_code
+        
         # Format the error response
         error_response = format_error_response(exc, request_id)
+        
+        # Preserve the actual HTTP status code in the error body
+        if isinstance(error_response.get('error'), dict):
+            error_response['error']['status_code'] = actual_status_code
+            # Map common status codes to readable messages
+            status_messages = {
+                400: 'Invalid request. Please check your input and try again.',
+                401: 'Authentication required. Please log in.',
+                403: 'You do not have permission to perform this action.',
+                404: 'The requested resource was not found.',
+                429: 'Too many requests. Please try again later.',
+            }
+            if actual_status_code in status_messages:
+                error_response['error']['message'] = status_messages[actual_status_code]
+        
         response.data = error_response
     
     return response

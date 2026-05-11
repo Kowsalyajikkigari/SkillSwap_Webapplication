@@ -64,7 +64,7 @@ class VoiceSession(models.Model):
         ]
 
     def __str__(self):
-        return f"Voice Session {self.session_id} - {self.user.username} ({self.session_type})"
+        return f"Voice Session {self.session_id} - {self.user.email} ({self.session_type})"
 
     def mark_started(self):
         """Mark the session as started"""

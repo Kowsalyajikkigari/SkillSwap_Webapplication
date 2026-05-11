@@ -132,8 +132,8 @@ export const SKILL_SWAP_ENDPOINTS = {
 
 // Dashboard Endpoints
 export const DASHBOARD_ENDPOINTS = {
-  GET_STATS: `${API_BASE_URL}/api/dashboard/stats`,
-  GET_RECOMMENDED_USERS: `${API_BASE_URL}/api/dashboard/recommended-users`,
+  GET_STATS: `${API_BASE_URL}/api/auth/dashboard/stats/`,
+  GET_RECOMMENDED_USERS: `${API_BASE_URL}/api/auth/dashboard/recommended/`,
 };
 
 // WebSocket Endpoints

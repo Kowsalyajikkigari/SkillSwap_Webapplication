@@ -1,11 +1,16 @@
 from django.core.management.base import BaseCommand
 from skills.models import SkillCategory, Skill
-
+import sys
 
 class Command(BaseCommand):
     help = 'Create default skill categories and skills for the SkillSwap platform'
 
     def handle(self, *args, **options):
+        # Fix Windows console encoding for Unicode characters
+        if sys.platform == 'win32':
+            import io
+            sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+
         self.stdout.write('Creating default skill categories and skills...')
 
         # Create skill categories

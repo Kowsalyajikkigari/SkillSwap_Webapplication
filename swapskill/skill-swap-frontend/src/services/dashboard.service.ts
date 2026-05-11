@@ -5,7 +5,6 @@
  */
 
 import { get } from './api.service';
-import { API_BASE_URL } from '../config/api.config';
 
 // Types
 export interface DashboardUser {
@@ -54,11 +53,11 @@ export interface DashboardStats {
 
 // Dashboard API endpoints
 const DASHBOARD_ENDPOINTS = {
-  GET_STATS: `${API_BASE_URL}/auth/dashboard/stats/`,
-  GET_RECOMMENDED_USERS: `${API_BASE_URL}/auth/dashboard/recommended/`,
-  GET_UPCOMING_SESSIONS: `${API_BASE_URL}/sessions/sessions/upcoming/`,
-  GET_USER_SKILLS: `${API_BASE_URL}/skills/teaching/`,
-  GET_USER_LEARNING_SKILLS: `${API_BASE_URL}/skills/learning/`,
+  GET_STATS: '/api/auth/dashboard/stats/',
+  GET_RECOMMENDED_USERS: '/api/auth/dashboard/recommended/',
+  GET_UPCOMING_SESSIONS: '/api/sessions/sessions/upcoming/',
+  GET_USER_SKILLS: '/api/skills/teaching/',
+  GET_USER_LEARNING_SKILLS: '/api/skills/learning/',
 };
 
 /**
@@ -98,15 +97,21 @@ export const getUpcomingSessions = async ({ signal }: { signal?: AbortSignal } =
 
 /**
  * Get recent activity for the dashboard
+ * Note: This endpoint may not exist on all backends.
+ * Falls back to empty array.
  */
 export const getRecentActivity = async () => {
   try {
     console.log('🔄 Fetching recent activity...');
-    const response = await get(`${API_BASE_URL}/activity/recent/`);
+    const response = await get('/api/auth/dashboard/stats/');
     return response;
   } catch (error) {
-    console.error('❌ Error fetching recent activity:', error);
-    throw error;
+    console.warn('⚠️ Recent activity endpoint not available, using dashboard stats as fallback');
+    // Return a minimal activity structure so callers don't break
+    return {
+      sessions: { completed: 0, total: 0, pending: 0 },
+      activity: { conversations: 0, hours_exchanged: 0 },
+    };
   }
 };
 

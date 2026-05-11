@@ -190,12 +190,11 @@ class HealthCheckMiddleware(MiddlewareMixin):
         if request.path == '/health/':
             from django.db import connection
             from django.core.cache import cache
+            from datetime import datetime, timezone as tz
             
             health_status = {
                 'status': 'healthy',
-                'timestamp': logger.handlers[0].formatter.formatTime(logging.LogRecord(
-                    name='', level=0, pathname='', lineno=0, msg='', args=(), exc_info=None
-                )) if logger.handlers else None,
+                'timestamp': datetime.now(tz.utc).isoformat(),
                 'services': {}
             }
             

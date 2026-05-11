@@ -1,5 +1,4 @@
 import { get } from './api.service';
-import { API_BASE_URL } from '../config/api.config';
 
 export interface ProfileCompletionStatus {
   is_complete: boolean;
@@ -32,7 +31,7 @@ export interface OnboardingStep {
  */
 export const getProfileCompletionStatus = async (): Promise<ProfileCompletionStatus> => {
   try {
-    const response = await get<ProfileCompletionStatus>(`${API_BASE_URL}/api/auth/profile/completion-status/`);
+    const response = await get<ProfileCompletionStatus>('/api/auth/profile/completion-status/');
     return response;
   } catch (error) {
     console.error('Error fetching profile completion status:', error);

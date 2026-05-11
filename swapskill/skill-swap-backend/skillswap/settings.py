@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     # Third-party apps
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'channels',
     'django_filters',
@@ -60,7 +61,6 @@ MIDDLEWARE = [
     'utils.middleware.HealthCheckMiddleware',
     'utils.middleware.RequestLoggingMiddleware',
     'utils.middleware.RateLimitMiddleware',
-    'utils.middleware.SecurityMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -70,7 +70,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
-    'utils.middleware.CORSMiddleware',
 ]
 
 ROOT_URLCONF = 'skillswap.urls'
@@ -92,6 +91,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'skillswap.wsgi.application'
+ASGI_APPLICATION = 'skillswap.asgi.application'
 
 # Database
 # Use SQLite for simplicity
