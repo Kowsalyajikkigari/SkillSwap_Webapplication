@@ -9,9 +9,6 @@ import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { API_BASE_URL, USE_MOCK_DATA } from '../config/api.config';
 import { getToken, clearTokens } from './auth.service';
 
-// Debug: Log the API_BASE_URL to ensure it's correct
-console.log('🔧 API_BASE_URL configured as:', API_BASE_URL);
-console.log('🔧 API Service loaded with fixes applied - Version 2.0');
 
 // Create axios instance with default config
 const apiClient = axios.create({
@@ -33,15 +30,6 @@ const PUBLIC_ENDPOINTS = [
 // Request interceptor for adding auth token
 apiClient.interceptors.request.use(
   (config) => {
-    // Debug logging for profile creation issues
-    if (config.url?.includes('/auth/profile/')) {
-      console.log('🌐 Profile API Request:', {
-        method: config.method?.toUpperCase(),
-        url: config.url,
-        baseURL: config.baseURL,
-        fullURL: `${config.baseURL}${config.url}`
-      });
-    }
 
     // Check if this is a public endpoint
     const isPublicEndpoint = PUBLIC_ENDPOINTS.some(endpoint =>
@@ -55,10 +43,8 @@ apiClient.interceptors.request.use(
         // Django REST framework with JWT expects Authorization: Bearer <token>
         config.headers.Authorization = `Bearer ${token}`;
         if (config.url?.includes('/auth/profile/')) {
-          console.log('🔐 Added auth token to profile request');
         }
       } else if (config.url?.includes('/auth/profile/')) {
-        console.log('⚠️ No valid token found for profile request');
       }
     }
 
@@ -81,7 +67,6 @@ apiClient.interceptors.response.use(
         // Try to refresh the token using Django's refresh token endpoint
         const refreshToken = localStorage.getItem('refreshToken');
         if (refreshToken) {
-          console.log('🔄 Auto-refreshing expired token...');
           const response = await apiClient.post('/api/auth/token/refresh/', {
             refresh: refreshToken,
           });
@@ -93,10 +78,8 @@ apiClient.interceptors.response.use(
           // If a new refresh token is provided (token rotation), update it
           if (newRefresh) {
             localStorage.setItem('refreshToken', newRefresh);
-            console.log('🔄 Refresh token rotated automatically');
           }
 
-          console.log('✅ Token auto-refreshed successfully');
 
           // Retry the original request with the new token
           originalRequest.headers = {
@@ -135,7 +118,6 @@ export const get = async <T>(
 ): Promise<T> => {
   // If USE_MOCK_DATA is true and mockData is provided, return it immediately
   if (USE_MOCK_DATA && mockData) {
-    console.log(`Using mock data for GET ${url}`);
     return mockData;
   }
 
@@ -153,7 +135,6 @@ export const get = async <T>(
 
     // If mockData is provided, return it as fallback
     if (mockData) {
-      console.log(`Using fallback mock data for GET ${url} after error`);
       return mockData;
     }
 
@@ -177,15 +158,6 @@ export const post = async <T>(
     // Handle full URLs by extracting the path part
     const requestUrl = url.startsWith('http') ? new URL(url).pathname : url;
     
-    // Debug logging for voice-ai calls
-    if (url.includes('voice-ai')) {
-      console.log('🎤 Voice API Debug:', {
-        originalUrl: url,
-        requestUrl: requestUrl,
-        baseURL: API_BASE_URL,
-        finalUrl: `${API_BASE_URL}${requestUrl}`
-      });
-    }
     
     const response: AxiosResponse<T> = await apiClient.post(requestUrl, data, config);
     return response.data;
@@ -392,7 +364,6 @@ export const updateProfile = async (data: any): Promise<any> => {
   const hasValidAvatar = data.avatar && data.avatar instanceof File;
 
   if (hasValidAvatar) {
-    console.log('📸 Processing profile update with avatar file upload...');
 
     // Use FormData for file uploads with proper field names
     const formData = new FormData();
@@ -407,9 +378,7 @@ export const updateProfile = async (data: any): Promise<any> => {
       }
     });
 
-    console.log('📋 FormData contents for profile update:');
     for (let [key, value] of formData.entries()) {
-      console.log(`  ${key}:`, value instanceof File ? `File: ${value.name}` : value);
     }
 
     // Use PATCH method with FormData
@@ -425,12 +394,10 @@ export const updateProfile = async (data: any): Promise<any> => {
       throw error;
     }
   } else {
-    console.log('📝 Processing profile update without avatar (JSON)...');
 
     // Remove avatar from data if it's not a valid file to avoid backend errors
     const cleanData = { ...data };
     if (data.avatar && !(data.avatar instanceof File)) {
-      console.log('⚠️ Removing invalid avatar data from request:', typeof data.avatar);
       delete cleanData.avatar;
     }
 

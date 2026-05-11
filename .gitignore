@@ -34,6 +34,7 @@ venv.bak/
 
 # Django
 *.log
+logs/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
@@ -45,6 +46,14 @@ media/
 *.swp
 *.swo
 *~
+.qodo/
+.cursor/
+.claude/
+.aider*
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
 
 # OS
 .DS_Store
@@ -93,7 +102,26 @@ service-account.json
 staticfiles/
 static_collected/
 
+# Logs directory
+logs/
+
+# AI Tool Config
+.qodo/
+.cursor/
+.claude/
+
 # Keep important files
 !.env.example
 !README.md
 !.gitkeep
+
+# Debug/test files (public)
+public/test.html
+public/test-auth.html
+
+# Debug components
+src/components/debug/
+src/utils/backend-test.ts
+
+# Test plan documents (not code)
+src/tests/*.test.md
